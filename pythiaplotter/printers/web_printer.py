@@ -64,7 +64,7 @@ class VisPrinter(object):
         vis_node_dicts, vis_edge_dicts = create_vis_dicts(event.graph)
 
         pythia8status_file = resource_filename('pythiaplotter',
-                                               'particledata/pythia6status.json')
+                                               'particledata/pythia8status.json')
         with open(pythia8status_file) as f:
             pythia8status = f.read()
 
@@ -104,11 +104,11 @@ def construct_gv_only_edges(graph, graph_attr=None):
     if graph_attr:
         for k, v in graph_attr.items():
             gv_str.append("{}={};".format(k, v))
-    for out_node, in_node in graph.edges_iter(data=False):
+    for out_node, in_node in list(graph.edges(data=False)):
         gv_str.append("{0} -> {1};".format(out_node, in_node))
     initial = ' '.join([str(node) for node, node_data
-                        in graph.nodes_iter(data=True)
-                        if len(graph.predecessors(node)) == 0])
+                        in list(graph.nodes(data=True))
+                        if len(list(graph.predecessors(node))) == 0])
     gv_str.append("{{rank=same; {0} }};".format(initial))
     gv_str.append("}")
     return "".join(gv_str)
@@ -194,7 +194,7 @@ def create_vis_dicts(graph):
         return pd
 
     node_dicts = []
-    for node, node_data in graph.nodes_iter(data=True):
+    for node, node_data in list(graph.nodes(data=True)):
         nd = {
             "id": node,
             "label": "",
@@ -206,7 +206,7 @@ def create_vis_dicts(graph):
         node_dicts.append(nd)
 
     edge_dicts = []
-    for out_vtx, in_vtx, edge_data in graph.edges_iter(data=True):
+    for out_vtx, in_vtx, edge_data in list(graph.edges(data=True)):
         ed = {"from": out_vtx, "to": in_vtx}
         if 'particle' in edge_data:
             ed.update(_generate_particle_opts(edge_data['particle']))

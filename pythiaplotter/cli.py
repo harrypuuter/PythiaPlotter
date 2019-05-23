@@ -5,7 +5,6 @@ from __future__ import absolute_import
 import logging
 import argparse
 import os.path
-import sys
 import shutil
 from imp import load_source
 from collections import OrderedDict
@@ -80,6 +79,20 @@ def get_args(input_args):
                                    "either representated by Nodes or as Edges",
                               choices=helpr.VALID_REPRESENTATIONS)
 
+    output_group.add_argument("--filter",
+                              type=int,
+                              action="append",
+                              help="Remove any particles with this PDGID (final-state or not). "
+                              "Note that this covers both particle and anti-particle. "
+                              "Use this option multiple times for multiple PDGIDs.")
+
+    output_group.add_argument("--filterFinal",
+                              type=int,
+                              action="append",
+                              help="Remove any final-state particles with this PDGID. "
+                              "Note that this covers both particle and anti-particle. "
+                              "Use this option multiple times for multiple PDGIDs.")
+
     layouts = OrderedDict()
     layouts["dot"] = "(Default) Hierarchical drawings of directed graphs."
     layouts["neato"] = "'Spring model' layout by minimizing a global energy function."
@@ -123,7 +136,8 @@ def get_args(input_args):
     dump_config_key = "--dumpConfig"
     misc_group.add_argument(dump_config_key,
                             help="Dump the default config file. User can then modify it, "
-                            "and use it via --configFile.")
+                            "and use it via --configFile.",
+                            action='store_true')
     misc_group.add_argument("--configFile",
                             help="Configuration file to use")
     misc_group.add_argument("-v", "--verbose",
@@ -144,7 +158,7 @@ def get_args(input_args):
         exit(11)
 
     # Can generate default config file and exit before doing any parsing
-    if dump_config_key in sys.argv:
+    if dump_config_key in input_args:
         dump_default_config()
         exit(0)
 

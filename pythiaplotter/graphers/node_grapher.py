@@ -50,12 +50,12 @@ def assign_particles_nodes(node_particles):
     # Set initial_state and final_state flags, based on number of parents
     # (for initial_state) or number of children (for final_state)
     # This should be the only place it is done, otherwise confusing!
-    for node, data in gr.nodes_iter(data=True):
+    for node, data in list(gr.nodes(data=True)):
 
-        if len(gr.predecessors(node)) == 0:
+        if len(list(gr.predecessors(node))) == 0:
             data['particle'].initial_state = True
 
-        if len(gr.successors(node)) == 0:
+        if len(list(gr.successors(node))) == 0:
             data['particle'].final_state = True
 
     # log.debug("Graph nodes after assigning: %s" % gr.node)
@@ -66,7 +66,14 @@ def assign_particles_nodes(node_particles):
 
 
 def remove_particle_node(graph, node):
-    """Remove a particle node from the graph"""
+    """Remove a particle node from the graph
+
+    Parameters
+    ----------
+    graph : NetworkX.MultiDiGraph
+    node : int
+        Node to remove.
+    """
     # rewire - ensure all it's parents decay to all it's children
     for child in graph.successors(node):
         for parent in graph.predecessors(node):
@@ -81,9 +88,9 @@ def remove_isolated_nodes(gr):
     ----------
     gr : NetworkX.MultiDiGraph
     """
-    nodes = gr.nodes()[:]
+    nodes = list(gr.nodes())[:]
     for np in nodes:
-        if len(gr.predecessors(np)) == 0 and len(gr.successors(np)) == 0:
+        if len(list(gr.predecessors(np))) == 0 and len(list(gr.successors(np))) == 0:
             gr.remove_node(np)
 
 
@@ -107,11 +114,11 @@ def remove_redundant_nodes(graph):
     """
     graph_new = graph.copy()  # use copy to avoid modifying the thing we're iterating over
     removed_nodes = []  # need to keep track of things we've removed
-    for node, data in graph_new.nodes_iter(data=True):
+    for node, data in list(graph_new.nodes(data=True)):
         if node in removed_nodes:
             continue
-        children = graph.successors(node)
-        parents = graph.predecessors(node)
+        children = list(graph.successors(node))
+        parents = list(graph.predecessors(node))
         if len(children) == 1 and len(parents) == 1:
             p = data['particle']
             parent = graph.node[parents[0]]['particle']
@@ -120,3 +127,29 @@ def remove_redundant_nodes(graph):
                 log.debug("Removing (%d) %s", node, data['particle'])
                 remove_particle_node(graph, node)
                 removed_nodes.append(node)
+
+
+def remove_nodes_by_pdgid(graph, pdgid, final_state_only=True):
+    """Remove particles with pdgid from graph.
+
+    Removes both particle and anti-particle.
+
+    Parameters
+    ----------
+    graph : NetworkX.MultiDiGraph
+    pdgid : int
+        PDGID of particles to remove.
+    final_state_only : bool, optional
+        Only remove final state particles
+    """
+    # Do a while loop as editign whilst iterating could lead to issues.
+    done_removing = False
+    while not done_removing:
+        done_removing = True
+        for node, node_data in list(graph.nodes(data=True)):
+            if ((abs(node_data['particle'].pdgid) == pdgid) and
+                ((final_state_only and len(graph.successors(node)) == 0) or
+                 not final_state_only)):
+                remove_particle_node(graph, node)
+                done_removing = False
+                break

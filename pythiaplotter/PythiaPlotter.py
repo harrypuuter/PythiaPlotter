@@ -35,11 +35,14 @@ def choose_parser(opts):
         return parsers.HeppyParser(filename=opts.input,
                                    event_num=opts.eventNumber,
                                    **opts.HEPPY_PARSER_OPTS)
+    elif opts.inputFormat == "HERWIG":
+        return parsers.HerwigParser(filename=opts.input,
+                                   event_num=opts.eventNumber)
     else:
         raise NotImplementedError("Cannot parse input format %s" % opts.inputFormat)
 
 
-def main(in_args=None):
+def main(in_args=sys.argv[1:]):
     """Main entry point to run the whole thing."""
     opts = cli.get_args(in_args)
     # Parse input into a set of particles
@@ -53,6 +56,8 @@ def main(in_args=None):
     default_repr = parsers.parser_opts[opts.inputFormat].default_representation
     graph = assign_particles_to_graph(particles, default_repr,
                                       desired_repr=opts.representation,
+                                      filter_pdgid=opts.filter,
+                                      filter_pdgid_final=opts.filterFinal,
                                       remove_redundants=(not opts.redundants))
     event.graph = graph
     if opts.stats:
