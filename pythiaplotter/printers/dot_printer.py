@@ -103,10 +103,10 @@ class DotPrinter(object):
         graph = event.graph
         graph.graph["attr"] = self.graph_attr_gen.gv_str()
 
-        for _, node_data in graph.nodes_iter(data=True):
+        for _, node_data in list(graph.nodes(data=True)):
             node_data["attr"] = self.node_attr_gen.gv_str(node_data, fancy)
 
-        for _, _, edge_data in graph.edges_iter(data=True):
+        for _, _, edge_data in list(graph.edges(data=True)):
             edge_data["attr"] = self.edge_attr_gen.gv_str(edge_data, fancy)
 
 
@@ -128,17 +128,17 @@ def construct_gv_full(event):
     gv_str.append("{attr}".format(**graph.graph))
 
     # Write all the nodes to file, with their display attributes
-    for node, node_data in graph.nodes_iter(data=True):
+    for node, node_data in list(graph.nodes(data=True)):
         gv_str.append("{0} {attr};".format(node, **node_data))
 
     # Write all the edges to file, with their display attributes
-    for out_node, in_node, edge_data in graph.edges_iter(data=True):
+    for out_node, in_node, edge_data in list(graph.edges(data=True)):
         gv_str.append("{0} -> {1} {attr};".format(out_node, in_node, **edge_data))
 
     # Set all initial particles to be level in diagram
     initial = ' '.join([str(node) for node, node_data
-                        in graph.nodes_iter(data=True)
-                        if len(graph.predecessors(node)) == 0])
+                        in list(graph.nodes(data=True))
+                        if len(list(graph.predecessors(node))) == 0])
     gv_str.append("{{rank=same; {0} }}; "
                     "// initial particles on same level".format(initial))
     gv_str.append("}")

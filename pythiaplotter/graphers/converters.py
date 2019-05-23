@@ -32,10 +32,10 @@ def edge_to_node(graph):
     NetworkX.MultiDiGraph
     """
     node_particles = []
-    for out_node, in_node, edge_data in graph.edges_iter(data=True):
+    for out_node, in_node, edge_data in list(graph.edges(data=True)):
         particle = edge_data['particle']
         parent_barcodes = [data['particle'].barcode for _, _, data
-                           in graph.in_edges_iter(out_node, data=True)]
+                           in list(graph.in_edges(out_node, data=True))]
         np = NodeParticle(particle, parent_barcodes)
         node_particles.append(np)
     return assign_particles_nodes(node_particles)
@@ -68,7 +68,6 @@ def node_to_edge(graph):
     -------
     NetworkX.MultiDiGraph
     """
-
     graph_with_duplicates = insert_duplicate_nodes(graph)
     edge_particles = construct_edges_from_nodes(graph_with_duplicates)
     graph_edge = assign_particles_edges(edge_particles)
@@ -99,8 +98,8 @@ def insert_duplicate_nodes(graph):
     nodes_done = []
     graph_copy = graph.copy()
 
-    for node in graph.nodes_iter():
-        if node in nodes_done or len(graph.successors(node)) == 0:
+    for node in list(graph.nodes()):
+        if node in nodes_done or len(list(graph.successors(node))) == 0:
             continue
 
         log.debug("Doing node %d", node)
@@ -112,7 +111,7 @@ def insert_duplicate_nodes(graph):
             # it and a child with shared parentage
             for pa in parents:
                 log.debug("Parent %d", pa)
-                these_children = graph.successors(pa)
+                these_children = list(graph.successors(pa))
                 # Skip if only 1 child
                 if len(these_children) <= 1:
                     continue
@@ -121,7 +120,7 @@ def insert_duplicate_nodes(graph):
                     log.debug("Child %d", ch)
 
                     # Skip children with only 1 parent - no shared parentage, no duplication needed
-                    if len(graph.predecessors(ch)) <= 1:
+                    if len(list(graph.predecessors(ch))) <= 1:
                         log.debug("Skipping %d", ch)
                         continue
 
@@ -180,7 +179,7 @@ def get_related_parents_children(graph, node):
         All connected children
 
     """
-    all_children = graph.successors(node)
+    all_children = list(graph.successors(node))
     all_parents = [node]
     log.debug("start related parents: %s", all_parents)
     log.debug("start related children: %s", all_children)
@@ -251,7 +250,7 @@ def duplication_needed(graph, parents, children):
     -------
     bool
     """
-    return any([len(graph.predecessors(c)) != len(parents) for c in children])
+    return any([len(list(graph.predecessors(c))) != len(parents) for c in children])
 
 
 def construct_edges_from_nodes(graph):
@@ -279,7 +278,7 @@ def construct_edges_from_nodes(graph):
 
     def _find_outgoing_vtx_barcode(graph, node):
         """Find a suitable outgoing vertex, using parent's incoming if possible."""
-        parent_nodes = graph.predecessors(node)
+        parent_nodes = list(graph.predecessors(node))
         if len(parent_nodes) != 0:
             parent_in = set([graph.node[p]['in_vtx'] for p in parent_nodes
                              if 'in_vtx' in graph.node[p]])
@@ -295,7 +294,7 @@ def construct_edges_from_nodes(graph):
 
     def _find_incoming_vtx_barcode(graph, node):
         """Find a incoming vertex, using children's outgoing if possible."""
-        child_nodes = graph.successors(node)
+        child_nodes = list(graph.successors(node))
         if len(child_nodes) != 0:
             children_out = set([graph.node[c]['out_vtx'] for c in child_nodes
                                 if 'out_vtx' in graph.node[c]])
@@ -309,7 +308,7 @@ def construct_edges_from_nodes(graph):
                 return vtx.pop()
         return None
 
-    for node, data in graph.nodes_iter(data=True):
+    for node, data in list(graph.nodes(data=True)):
         log.debug("Constructing EP for node %d", node)
         # Figure out the outgoing vertex barcode, use parent's incoming one if there is a parent,
         # or any sibling outgoing one. Otherwise create unique one.

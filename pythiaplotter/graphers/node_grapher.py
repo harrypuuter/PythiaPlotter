@@ -50,12 +50,12 @@ def assign_particles_nodes(node_particles):
     # Set initial_state and final_state flags, based on number of parents
     # (for initial_state) or number of children (for final_state)
     # This should be the only place it is done, otherwise confusing!
-    for node, data in gr.nodes_iter(data=True):
+    for node, data in list(gr.nodes(data=True)):
 
-        if len(gr.predecessors(node)) == 0:
+        if len(list(gr.predecessors(node))) == 0:
             data['particle'].initial_state = True
 
-        if len(gr.successors(node)) == 0:
+        if len(list(gr.successors(node))) == 0:
             data['particle'].final_state = True
 
     # log.debug("Graph nodes after assigning: %s" % gr.node)
@@ -88,9 +88,9 @@ def remove_isolated_nodes(gr):
     ----------
     gr : NetworkX.MultiDiGraph
     """
-    nodes = gr.nodes()[:]
+    nodes = list(gr.nodes())[:]
     for np in nodes:
-        if len(gr.predecessors(np)) == 0 and len(gr.successors(np)) == 0:
+        if len(list(gr.predecessors(np))) == 0 and len(list(gr.successors(np))) == 0:
             gr.remove_node(np)
 
 
@@ -114,11 +114,11 @@ def remove_redundant_nodes(graph):
     """
     graph_new = graph.copy()  # use copy to avoid modifying the thing we're iterating over
     removed_nodes = []  # need to keep track of things we've removed
-    for node, data in graph_new.nodes_iter(data=True):
+    for node, data in list(graph_new.nodes(data=True)):
         if node in removed_nodes:
             continue
-        children = graph.successors(node)
-        parents = graph.predecessors(node)
+        children = list(graph.successors(node))
+        parents = list(graph.predecessors(node))
         if len(children) == 1 and len(parents) == 1:
             p = data['particle']
             parent = graph.node[parents[0]]['particle']
@@ -146,7 +146,7 @@ def remove_nodes_by_pdgid(graph, pdgid, final_state_only=True):
     done_removing = False
     while not done_removing:
         done_removing = True
-        for node, node_data in graph.nodes_iter(data=True):
+        for node, node_data in list(graph.nodes(data=True)):
             if ((abs(node_data['particle'].pdgid) == pdgid) and
                 ((final_state_only and len(graph.successors(node)) == 0) or
                  not final_state_only)):

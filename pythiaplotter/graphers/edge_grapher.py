@@ -44,7 +44,6 @@ def assign_particles_edges(edge_particles):
     NetworkX.MultiDiGraph
         Directed graph with particles assigned to edges, and nodes to represent relationships.
     """
-
     gr = nx.MultiDiGraph(attr=None)  # placeholder attr for later in printer
 
     # assign an edge for each Particle object, preserving direction
@@ -56,15 +55,15 @@ def assign_particles_edges(edge_particles):
 
     # Get in-degree for nodes so we can mark the initial state ones
     # (those with no incoming edges) and their particles
-    for node, degree in gr.in_degree_iter(gr.nodes()):
+    for node, degree in list(gr.in_degree(gr.nodes())):
         if degree == 0:
-            for _, _, edge_data in gr.out_edges_iter(node, data=True):
+            for _, _, edge_data in list(gr.out_edges(node, data=True)):
                 edge_data['particle'].initial_state = True
 
     # Do same for final-state nodes/particles (nodes which have no outgoing edges)
-    for node, degree in gr.out_degree_iter(gr.nodes()):
+    for node, degree in list(gr.out_degree(gr.nodes())):
         if degree == 0:
-            for _, _, edge_data in gr.in_edges_iter(node, data=True):
+            for _, _, edge_data in list(gr.in_edges(node, data=True)):
                 edge_data['particle'].final_state = True
 
     log.debug("Edges after assigning: %s", gr.edges())
@@ -161,7 +160,7 @@ def remove_redundant_edges(graph):
     done_removing = False
     while not done_removing:
         done_removing = True
-        for out_node, in_node, edge_data in graph.edges_iter(data=True):
+        for out_node, in_node, edge_data in list(graph.edges(data=True)):
             # get all incoming edges to this particle's out node (parents)
             parent_edges = graph.in_edges(out_node, data=True)
             # get all outgoing edges from this particle's out node (siblings)
@@ -202,7 +201,7 @@ def remove_edges_by_pdgid(graph, pdgid, final_state_only=True):
     done_removing = False
     while not done_removing:
         done_removing = True
-        for out_vtx, in_vtx, edge_data in graph.edges_iter(data=True):
+        for out_vtx, in_vtx, edge_data in list(graph.edges(data=True)):
             if ((abs(edge_data['particle'].pdgid) == pdgid) and
                 ((final_state_only and len(graph.successors(in_vtx)) == 0) or
                  not final_state_only)):
